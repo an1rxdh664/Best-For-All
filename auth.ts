@@ -1,38 +1,25 @@
 // auth.ts
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
+import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-  ],
+  ...authConfig,
+  adapter: PrismaAdapter(prisma),
   callbacks: {
-    // Modify JWT token or session if you need custom backend fields (e.g., user roles, db IDs)
+    ...authConfig.callbacks,
     async jwt({ token, user }) {
-        if (user) {
-            token.id = user.id;
-        }
-        return token;
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
     },
     async session({ session, token }) {
-        if (session.user && token.id) {
-            session.user.id = token.id as string;
-        }
-        return session;
+      if (session.user && token.id) {
+        session.user.id = token.id as string;
+      }
+      return session;
     },
-    authorized({ request, auth }) {
-        const isLoggedIn = !!auth;
-        const isOnDashboard = request.nextUrl.pathname.startsWith("/dashboard");
-        const isInChat = request.nextUrl.pathname.startsWith("/chat");
-
-        if (!isLoggedIn && (isOnDashboard || isInChat)) return false;
-        return true;
-    },
-  },
-  pages : {
-    signIn: "/api/auth/login",
   },
 });

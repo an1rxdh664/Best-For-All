@@ -1,7 +1,9 @@
-// proxy.ts
-export { auth as middleware } from "@/auth";
+// middleware.ts
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
-  // Apply middleware to specific protected backend routes or dashboard paths
   matcher: ["/api/protected/:path*", "/dashboard/:path*", "/chat/:path*"],
 };

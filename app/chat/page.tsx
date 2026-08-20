@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Heart, Mic, ArrowRight, LogOut, PanelLeft } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 const suggestions = [
     { text: "What is the best time to visit Manali?" },
@@ -50,11 +50,11 @@ export default function Chat() {
                     <p className="mb-2 px-2 text-[11px] font-medium tracking-wide text-neutral-400">
                         RECENT CHATS
                     </p>
-                    {/* <div className="flex-1 space-y-0.5 overflow-y-auto">
-                        
-                    </div> */}
 
-                    <button className="mt-4 flex items-center gap-2 px-2 py-2 text-sm text-rose-500 hover:text-rose-600">
+                    <button className="mt-4 flex items-center gap-2 px-2 py-2 text-sm text-rose-500 hover:text-rose-600" 
+                        onClick={async () => {
+                            await signOut({redirectTo: "/"})
+                        }}>
                         <span>Logout</span>
                         <LogOut size={14} />
                     </button>
