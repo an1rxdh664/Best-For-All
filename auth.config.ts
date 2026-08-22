@@ -1,12 +1,22 @@
 // auth.config.ts
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 
 export const authConfig = {
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    Credentials({
+        name: "Credentials",
+        "credentials": {
+            email: { label: "Email", type: "email" },
+            password: { label: "Password", type: "password"}
+            
+        } 
     }),
   ],
   // Crucial: Force NextAuth to use stateless JWT tokens 
