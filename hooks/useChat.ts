@@ -43,7 +43,7 @@ export function useChat() {
         setActiveId(id);
     };
 
-    const sendMessage = (content: string) => {
+    const sendMessage = async (content: string) => {
         if (!content.trim()) return;
 
         let targetId = activeId;
@@ -69,6 +69,10 @@ export function useChat() {
             createdAt: new Date().toISOString(),
         };
 
+        const currentTargetChat = updatedConversations.find((c)=> c.id === targetId);
+        const exisitingMessages = currentTargetChat ? currentTargetChat.messages : [];
+        const nextMessage = [...exisitingMessages, userMsg]
+
         setConversations(
             updatedConversations.map((c) => {
                 if (c.id === targetId) {
@@ -83,7 +87,43 @@ export function useChat() {
                 return c;
             })
         );
+        
+        const restrucutredPayload = nextMessage.map((m) => ({
+            role: m.sender === "user" ? "user" : "assistant",
+            content: m.content
+        }));
+
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type" : "application/json" },
+                body: JSON.stringify({ messages : restrucutredPayload })
+            });
+
+            const data = await res.json();
+
+            const assistantMsg : Message = {
+                id: crypto.randomUUID(),
+                sender: "assistant",
+                content : data.reply || "Sorry i could not generate a response.",
+                createdAt : new Date().toISOString(),
+            };
+
+            setConversations((prev) => prev.map((c) => {
+                if(c.id === targetId) {
+                    return {
+                        ...c,
+                        updatedAt: new Date().toISOString(),
+                        messages : [...c.messages, assistantMsg]
+                    };
+                }
+                return c;
+            }))
+        } catch (e) {
+            console.error("Error communicating to the ollama API route : ", e);
+        }
     };
+
 
     return {
         conversations,
