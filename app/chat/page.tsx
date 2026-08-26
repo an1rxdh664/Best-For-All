@@ -14,6 +14,8 @@ export default function ChatPage() {
         activeConversation,
         createNewChat,
         selectChat,
+        deleteChat,
+        renameChat,
         sendMessage,
     } = useChat();
 
@@ -33,8 +35,10 @@ export default function ChatPage() {
                 activeId={activeId}
                 onSelect={selectChat}
                 onNewChat={createNewChat}
+                onDeleteChat={deleteChat}
+                onRenameChat={renameChat}
                 />
-                <ChatCanvas
+                <ChatCanvas 
                 conversation={activeConversation}
                 onSendMessage={sendMessage}
                 />

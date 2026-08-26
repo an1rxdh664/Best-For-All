@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Providers } from "./providers";
 import { auth, signOut } from "@/auth";
 import React from "react";
+import { AuthSyncListener } from "@/components/AuthSyncListener"
 
 export default async function RootLayout({ children }: {children: React.ReactNode}) {
 
@@ -45,6 +46,7 @@ export default async function RootLayout({ children }: {children: React.ReactNod
           </div>
         </nav>
         <Providers>
+          <AuthSyncListener />
           {children}
         </Providers>
       </body>

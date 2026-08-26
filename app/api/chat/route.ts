@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Ollama } from "ollama";
+import { prisma } from "@/lib/prisma"
 
 const ollama = new Ollama({ host: "http://127.0.0.1:11434" })
 

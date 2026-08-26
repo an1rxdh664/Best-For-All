@@ -1,9 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { Mic, ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Mic, MicOff, ArrowRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Conversation } from "@/types/chat";
+import MascotFace from "./MascotFace";
+
+type SpeechRecognitionInstance = {
+    lang: string,
+    interimResults : boolean,
+    continuous : boolean, 
+    start: () => void;
+    stop : () => void;
+    onresult : ((event : any) => void) | null;
+    onend : (() => void) | null;
+    onerror : ((event : any) => void) | null;
+}
 
 const suggestions = [
     { text: "What is the best time to visit Manali?" },
@@ -18,7 +30,52 @@ interface ChatCanvasProps {
 
 export default function ChatCanvas({ conversation, onSendMessage }: ChatCanvasProps) {
     const [input, setInput] = useState("");
+    const [isListening, setIsListening] = useState(false);
+    const [micSupported, isMicSupported] = useState(true);
+    const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
     const { data: session } = useSession();
+
+    useEffect(() => {
+    const speechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!speechRecognitionCtor) {
+        isMicSupported(false);
+        return;
+    }
+
+    const recognition: SpeechRecognitionInstance = new speechRecognitionCtor();
+
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onresult = (event: any) => {   // was onResult
+        let transcript = "";
+        for (let i = 0; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        setInput(transcript);
+    };
+
+    recognition.onend = () => setIsListening(false);   // was onEnd
+    recognition.onerror = () => setIsListening(false); // was onError
+
+    recognitionRef.current = recognition;
+}, []);
+
+const toggleMic = () => {
+    if (!micSupported || !recognitionRef.current) return;   // was "|| recognitionRef.current" — inverted, always bailed out
+
+    if (isListening) {
+        recognitionRef.current.stop();
+        setIsListening(false);
+    } else {
+        setInput("");
+        recognitionRef.current.start();
+        setIsListening(true);
+    }
+};
 
     const handleSend = () => {
         if (!input.trim()) return;
@@ -37,6 +94,9 @@ export default function ChatCanvas({ conversation, onSendMessage }: ChatCanvasPr
             {/* Empty State / Suggestions (Only show when there are no messages) */}
             {messages.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center w-full max-w-xl">
+                    
+                    < MascotFace />
+
                     <div className="relative mb-10 grid w-full grid-cols-2 gap-3">
                         {suggestions.map((s, i) => (
                             <button key={i} onClick={() => onSendMessage(s.text)} className="rounded-xl bg-neutral-50 px-4 py-3 text-left text-[13px] text-neutral-600 shadow-sm hover:bg-neutral-100 cursor-pointer">
@@ -71,8 +131,13 @@ export default function ChatCanvas({ conversation, onSendMessage }: ChatCanvasPr
                         placeholder="What are the best places to visit in monsoon?"
                         className="flex-1 bg-transparent text-sm text-white placeholder-neutral-400 outline-none"
                     />
-                    <button className="text-neutral-400 hover:text-white cursor-pointer">
-                        <Mic size={16} />
+                    <button
+                        onClick={toggleMic}
+                        disabled={!micSupported}
+                        title={micSupported ? (isListening ? "Stop listening" : "Speak") : "Voice input not supported in this browser"}
+                        className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                        isListening ? "text-rose-400" : "text-neutral-400 hover:text-white"}`}>
+                        {isListening ? <MicOff size={16} /> : <Mic size={16} />}
                     </button>
                     <button onClick={handleSend} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black hover:bg-neutral-200 cursor-pointer">
                         <ArrowRight size={15} />
