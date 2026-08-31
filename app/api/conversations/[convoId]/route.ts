@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -43,17 +44,19 @@ export async function PATCH(req: Request, { params }: { params: { convoId: strin
   }
 }
 
+// 4aa332e2d5d8 -> Docker image idfr cf
+
 export async function DELETE(req: Request, { params }: { params: { convoId: string } }) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const userId = session.user.id;
-    const { convoId } = params;
+    const { convoId } = await params;
 
-    const convo = await prisma.conversation.findUnique({ where: { convoId } });
+    const convo = await prisma.conversation.findUnique({ where: { convoId : convoId } });
     if (!convo || convo.userId !== userId) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await prisma.conversation.delete({ where: { convoId } });
+    await prisma.conversation.delete({ where: { convoId: convoId } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

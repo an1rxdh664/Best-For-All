@@ -1,44 +1,35 @@
 // app/dashboard/page.tsx
 import Link from "next/link";
-import { auth, signOut } from "@/auth";
+import { ArrowRight } from "lucide-react";
+import { auth } from "@/auth";
 
 export default async function Dashboard() {
     const session = await auth();
+    const firstName = session?.user?.name?.split(" ")[0] ?? "there";
 
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 p-3">
-            <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-                <p className="text-sm text-gray-400">Signed in as</p>
-                <p className="mb-6 text-sm font-medium text-gray-700">
-                    {session?.user?.email}
-                </p>
+        <div className="flex h-screen w-full items-center justify-center bg-white p-3">
+            <div className="flex w-full max-w-sm flex-col items-center gap-6 rounded-2xl border border-neutral-100 p-8 text-center">
+                <div className="h-12 w-12 shrink-0 rounded-full bg-gradient-to-br from-blue-400 via-fuchsia-400 to-rose-400" />
 
-                <h1 className="mb-8 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-2xl font-semibold text-transparent">
-                    Welcome, {session?.user?.name?.split(" ")[0] ?? "there"}
+                <div>
+                    <p className="text-sm text-neutral-400">Signed in as</p>
+                    <p className="text-sm font-medium text-neutral-700">
+                        {session?.user?.email}
+                    </p>
+                </div>
+
+                <h1 className="text-xl font-semibold text-neutral-900">
+                    Welcome, {firstName}
                 </h1>
 
-                <div className="flex flex-col gap-3">
-                    <Link
-                        href="/chat"
-                        className="rounded-xl bg-gray-900 py-2.5 text-center text-sm font-medium text-white transition hover:bg-gray-700"
-                    >
-                        Go to chat
-                    </Link>
-
-                    <form
-                        action={async () => {
-                            "use server";
-                            await signOut({ redirectTo: "/" });
-                        }}
-                    >
-                        <button
-                            type="submit"
-                            className="w-full rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-50"
-                        >
-                            Sign out
-                        </button>
-                    </form>
-                </div>
+                <Link
+                    href="/chat"
+                    className="flex w-full items-center justify-between rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700"
+                >
+                    <span>Go to chat</span>
+                    <ArrowRight size={15} />
+                </Link>
             </div>
         </div>
     );

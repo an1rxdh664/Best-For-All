@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import { Conversation, Message } from "@/types/chat";
 import { useSession } from "next-auth/react";
+import { UserRoundArrowLeft } from "lucide-react";
 
 export function useChat() {
     const { data: session, status } = useSession();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
+    const [userLocation, setUserLocation] = useState<{ lat: number | null; lon: number | null}>({ lat: null, lon: null})
+
+    useEffect(() => {
+        if(!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition((pos) => setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude}), (err) => console.error("Geolocation error : ", err)); 
+    }, [])
 
     // Loading from server when authenticated, otherwise from localStorage
     useEffect(() => {
@@ -225,7 +232,7 @@ export function useChat() {
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type" : "application/json" },
-                body: JSON.stringify({ messages : restrucutredPayload })
+                body: JSON.stringify({ messages : restrucutredPayload, convoId: targetId, lat: userLocation.lat, lon: userLocation.lon})
             });
 
             const data = await res.json();

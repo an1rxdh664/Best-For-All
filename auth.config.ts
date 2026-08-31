@@ -2,7 +2,6 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 
 export const authConfig = {
   providers: [
@@ -12,11 +11,11 @@ export const authConfig = {
     }),
     Credentials({
         name: "Credentials",
-        "credentials": {
-            email: { label: "Email", type: "email" },
-            password: { label: "Password", type: "password"}
-            
-        } 
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password"}    
+        },
+        async authorize() { return null}
     }),
   ],
   // Crucial: Force NextAuth to use stateless JWT tokens 
