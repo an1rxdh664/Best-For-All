@@ -1,0 +1,35 @@
+services:
+  ollama:
+    image: ollama/ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ollama_models:/root/.ollama
+    ports:
+      - "11434:11434"
+
+  nlp-service:
+    build: ./nlp
+    env_file: ./nlp/.env
+    ports:
+      - "8000:8000"
+
+  web:
+    build: .
+    env_file: .env
+    depends_on:
+      - ollama
+      - nlp-service
+    environment:
+      NLP_SERVICE_URL: http://nlp-service:8000
+      OLLAMA_HOST: http://ollama:11434
+    ports:
+      - "3000:3000"
+
+volumes:
+  ollama_models:

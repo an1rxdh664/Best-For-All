@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { Ollama } from "ollama";
 import { prisma } from "@/lib/prisma"
 
-const ollama = new Ollama({ host: "http://127.0.0.1:11434" })
+const ollama = new Ollama({ host: process.env.OLLAMA_HOST || "http://127.0.0.1:11434" })
 
 // The Python NLP service (api.py / uvicorn) runs locally alongside this
 // Next.js app — no Docker networking involved, just a plain loopback call.
