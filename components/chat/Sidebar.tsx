@@ -5,6 +5,7 @@ import { Plus, Heart, LogOut, PanelLeftClose, PanelLeftOpen, MessageSquare, Penc
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import { Conversation } from "@/types/chat";
+import ProfileDashboard from "@/components/ProfileDashboard";
 
 interface SidebarProps {
   conversations: Conversation[];
@@ -21,7 +22,7 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
     const [editingId, setEditingId] = useState<string | null>();
     const [draftTitle, setDraftTitle] = useState("");
 
-    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [showProfileDashboard, setShowProfileDashboard] = useState(false);
     const [showVerifyModal, setShowVerifyModal] = useState(false);
     const [otpValue, setOtpValue] = useState("");
     const [sendingOtp, setSendingOtp] = useState(false);
@@ -36,7 +37,7 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
             try {
                 const res = await fetch("/api/auth/email-verified", {
                     method: "POST",
-                    headers: { "Content-Type": "applications/json" },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: session.user.email }),
                 })
 
@@ -100,7 +101,6 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
             if(!res.ok) throw new Error(data.error || "Verification failed");
             setVerifyStatus(true);
             setShowVerifyModal(false);
-            // refresh page/session to reflect emailVerified
             window.location.reload();
         } catch (err: any) {
             console.error(err);
@@ -115,9 +115,9 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
             <div className={`mb-6 flex ${isOpen ? "items-center justify-between" : "flex-col items-center gap-2"}`}>
                 <div className="flex items-center gap-2 overflow-hidden">
                     <button
-                        onClick={() => setShowProfileMenu(!showProfileMenu)}
+                        onClick={() => setShowProfileDashboard(true)}
                         className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 via-fuchsia-400 to-rose-400 focus:outline-none"
-                        aria-label="Open profile menu"
+                        aria-label="Open profile dashboard"
                     >
                         {session?.user?.image ? (
                         <Image
@@ -132,80 +132,84 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
 
                     {isOpen && <span className="truncate text-sm font-medium text-neutral-800">{session?.user?.name}</span>}
                 </div>
- 
+
                 <button className="text-neutral-400 hover:text-neutral-600 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
                 {isOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
                 </button>
             </div>
 
-            {showProfileMenu && (
-                <div className="absolute z-50 left-3 top-16 w-44 rounded-md bg-white shadow-lg border border-neutral-100">
-                    <div className="p-2">
-                        <div className="mb-2 text-sm font-medium text-neutral-700">Account</div>
-                        <button
-                            className="w-full text-left rounded px-2 py-1 text-sm hover:bg-neutral-50"
-                            onClick={() => { /* placeholder settings */ setShowProfileMenu(false) }}
-                        >
-                            Settings
-                        </button>
+            {showProfileDashboard && (
+                <ProfileDashboard
+                    onClose={() => setShowProfileDashboard(false)}
+                    userName={session?.user?.name ?? ""}
+                    userEmail={session?.user?.email ?? ""}
+                    userImage={session?.user?.image ?? null}
+                    isVerified={Boolean(verifyStatus)}
+                    onVerifyEmail={sendOtp}
+                    sendingOtp={sendingOtp}
+                    onSignOut={async () => await signOut({ redirectTo: "/" })}
+                />
+            )}
 
-                        <div className="mt-1">
-                            {verifyStatus ? (
-                                <div className="flex items-center justify-between gap-2 rounded px-2 py-1 text-sm bg-emerald-50 text-emerald-700">
-                                    <span>Verified</span>
-                                    <Check size={14} />
-                                </div>
-                            ) : (
-                                <button
-                                    className="w-full text-left rounded px-2 py-1 text-sm hover:bg-neutral-50"
-                                    onClick={async () => {
-                                        setShowProfileMenu(false);
-                                        await sendOtp();
-                                    }}
-                                    disabled={sendingOtp}
-                                >
-                                    {sendingOtp ? "Sending..." : "Verify Email"}
-                                </button>
-                            )}
+            {showVerifyModal && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowVerifyModal(false)} />
+                    <div className="relative z-[71] w-80 rounded-2xl bg-white p-5 shadow-xl">
+                        <h3 className="text-sm font-semibold text-neutral-800">Verify your email</h3>
+                        <p className="mt-1 text-xs text-neutral-500">Enter the code we sent to {session?.user?.email}</p>
+                        <input
+                            autoFocus
+                            value={otpValue}
+                            onChange={(e) => setOtpValue(e.target.value)}
+                            placeholder="Enter OTP"
+                            className="mt-3 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-fuchsia-400"
+                        />
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                onClick={() => setShowVerifyModal(false)}
+                                className="rounded-lg px-3 py-1.5 text-xs text-neutral-500 hover:bg-neutral-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={verifyOtp}
+                                disabled={verifyingOtp}
+                                className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-blue-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                            >
+                                {verifyingOtp ? "Verifying..." : "Verify"}
+                            </button>
                         </div>
-
-                        <button
-                            className="mt-2 w-full text-left rounded px-2 py-1 text-sm text-rose-500 hover:bg-rose-50"
-                            onClick={async () => await signOut({ redirectTo: "/" })}
-                        >
-                            Sign out
-                        </button>
                     </div>
                 </div>
             )}
- 
+
             <nav className="mb-6 flex flex-col gap-1 text-sm">
                 <button onClick={onNewChat} className={`flex items-center ${isOpen ? "justify-between" : "justify-center"} rounded-lg px-2 py-2 text-neutral-700 hover:bg-neutral-50 cursor-pointer`}>
                 {isOpen && <span>New Chat</span>}
                 <Plus size={15} />
                 </button>
- 
+
                 <button className={`flex items-center ${isOpen ? "justify-between" : "justify-center"} rounded-lg px-2 py-2 text-neutral-700 hover:bg-neutral-50 cursor-pointer`}>
                 {isOpen && <span>Favourites</span>}
                 <Heart size={15} />
                 </button>
             </nav>
- 
+
             {isOpen && (
                 <p className="mb-2 px-2 text-[11px] font-medium tracking-wide text-neutral-400">RECENT CHATS</p>
             )}
- 
+
             <div className="flex-1 overflow-y-auto space-y-1">
                 {conversations.map((c) => {
                     const isEditing = editingId === c.id;
- 
+
                     return (
                         <div
                             key={c.id}
                             className={`group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-xs transition-colors ${
                             c.id === activeId ? "bg-neutral-100 font-semibold text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"}`}>
                             <MessageSquare size={14} className="shrink-0" />
- 
+
                             {isOpen && (
                                 isEditing ? (
                                     <input
@@ -226,7 +230,7 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                                     </button>
                                 )
                             )}
- 
+
                             {isOpen && (
                                 <div className="flex shrink-0 items-center gap-1">
                                     {isEditing ? (
@@ -258,47 +262,6 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                     );
                 })}
             </div>
- 
-            <button
-                className={`mt-auto flex w-full items-center ${isOpen ? "gap-2" : "justify-center"} px-2 py-2 text-sm text-rose-500 hover:text-rose-600 cursor-pointer`}
-                onClick={async () => await signOut({ redirectTo: "/" })}>
-                {isOpen && <span>Logout</span>}
-                <LogOut size={14} />
-            </button>
-
-            {showVerifyModal && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40">
-                    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-md border border-neutral-100">
-                        <h3 className="mb-2 text-lg font-medium">Enter verification code</h3>
-                        <p className="mb-4 text-sm text-neutral-500">A 6-digit code was sent to <span className="font-medium">{session?.user?.email}</span></p>
-
-                        <input
-                            type="text"
-                            maxLength={6}
-                            value={otpValue}
-                            onChange={(e) => setOtpValue(e.target.value)}
-                            className="w-full mb-4 rounded border border-neutral-200 px-3 py-2 text-center font-mono tracking-widest"
-                            placeholder="000000"
-                        />
-
-                        <div className="flex gap-2">
-                            <button
-                                className="flex-1 rounded bg-neutral-900 py-2 text-sm text-white"
-                                onClick={verifyOtp}
-                                disabled={verifyingOtp}
-                            >
-                                {verifyingOtp ? "Verifying..." : "Verify"}
-                            </button>
-                            <button
-                                className="flex-1 rounded border border-neutral-200 py-2 text-sm"
-                                onClick={() => setShowVerifyModal(false)}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </aside>
     );
 }

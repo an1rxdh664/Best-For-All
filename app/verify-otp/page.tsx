@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
-export default function VerifyOtpPage() {
+function VerifyOtpContent() {
     const searchParams = useSearchParams();
     const email = searchParams.get("email") || "";
     const [otp, setOtp] = useState("");
@@ -29,8 +29,6 @@ export default function VerifyOtpPage() {
             throw new Error(data.error || "Failed to verify OTP");
         }
 
-        // Automatically redirect to login or chat upon verification
-        // router.push("/api/auth/login");
         router.push("/chat");
         } catch (err: any) {
             setError(err.message);
@@ -72,5 +70,13 @@ export default function VerifyOtpPage() {
             </form>
         </div>
         </div>
+    );
+}
+
+export default function VerifyOtpPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <VerifyOtpContent />
+        </Suspense>
     );
 }

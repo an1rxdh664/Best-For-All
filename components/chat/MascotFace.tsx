@@ -10,7 +10,6 @@ export default function MascotFace() {
     useEffect(() => {
         const handleMove = (e: MouseEvent) => {
             const eyes = [leftEyeRef.current, rightEyeRef.current];
-
             for (const eye of eyes) {
                 if (!eye) continue;
                 const rect = eye.getBoundingClientRect();
@@ -21,7 +20,6 @@ export default function MascotFace() {
                 eye.style.transform = `rotate(${deg}deg)`;
             }
         };
-
         window.addEventListener("mousemove", handleMove);
         return () => window.removeEventListener("mousemove", handleMove);
     }, []);
@@ -30,13 +28,14 @@ export default function MascotFace() {
         <div className="flex w-full justify-center py-4">
             <div
                 ref={faceRef}
-                className="relative flex h-20 w-20 items-center justify-center rounded-full"
+                className="relative flex h-36 w-36 items-center justify-center rounded-full"
                 style={{
                     background:
-                        "linear-gradient(135deg, #f472b6 0%, #a78bfa 50%, #60a5fa 100%)",
+                        "radial-gradient(circle at 32% 28%, #ffd9e8 0%, #f6a8ff 22%, #b48cff 45%, #7b6cf6 65%, #5b8ff9 85%, #4fa8ff 100%)",
+                    boxShadow: "0 10px 30px rgba(120, 80, 220, 0.35)",
                 }}
             >
-                <div className="flex gap-4">
+                <div className="flex gap-6">
                     <Eye ref={leftEyeRef} />
                     <Eye ref={rightEyeRef} />
                 </div>
@@ -48,9 +47,14 @@ export default function MascotFace() {
 const Eye = ({ ref }: { ref: React.Ref<HTMLDivElement> }) => (
     <div
         ref={ref}
-        className="relative h-4 w-4 rounded-full bg-white/90"
-        style={{ transformOrigin: "center", transition: "transform 0.08s linear" }}
+        style={{ transformOrigin: "50% 65%", transition: "transform 0.08s linear" }}
     >
-        <span className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-gray-900" />
+        <svg width="26" height="26" viewBox="0 0 26 26">
+            <polygon
+                points="13,2 24,22 2,22"
+                fill="#ffffff"
+                style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+            />
+        </svg>
     </div>
 );

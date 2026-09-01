@@ -106,7 +106,8 @@ const toggleMic = () => {
                     </div>
 
                     <h1 className="mb-1 text-2xl font-semibold">
-                        <span className="bg-rose-100 px-2 text-rose-500">Welcome, {session?.user?.name?.slice(0, session?.user?.name?.indexOf(" "))}!</span>
+                        {/* <span className="bg-rose-100 px-2 text-rose-500">Welcome, {session?.user?.name?.slice(0, session?.user?.name?.indexOf(" "))}!</span> */}
+                        <span className="bg-rose-100 px-2 text-rose-500">Welcome, {session?.user?.name?.split(" ")[0]}!</span>
                     </h1>
                     <p className="mb-8 text-lg text-neutral-300">How can I help you today?</p>
                 </div>
