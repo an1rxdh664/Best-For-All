@@ -4,6 +4,7 @@ import { Ollama } from "ollama";
 import { prisma } from "@/lib/prisma"
 
 const ollama = new Ollama({ host: process.env.OLLAMA_HOST || "http://127.0.0.1:11434" })
+const ollamaModel = process.env.OLLAMA_MODEL || "llama3.2:1b";
 // const ollama = new Ollama({ host: "http://127.0.0.1:11434" })
 
 // The Python NLP service (api.py / uvicorn) runs locally alongside this
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
 
         // 3. Local LLM turns the structured data into the final reply.
         const response = await ollama.chat({
-            model: "llama3.2",
+            model: ollamaModel,
             messages: augmentedMessages,
             stream: false,
         });

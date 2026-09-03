@@ -1,6 +1,8 @@
 services:
   ollama:
     image: ollama/ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
     deploy:
       resources:
         reservations:
@@ -12,24 +14,57 @@ services:
       - ollama_models:/root/.ollama
     ports:
       - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  ollama-init:
+    image: ollama/ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_models:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["ollama pull \"$${OLLAMA_MODEL}\""]
 
   nlp-service:
     build: ./nlp
-    env_file: ./nlp/.env
+    env_file:
+      - ./nlp/.env
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   web:
     build: .
-    env_file: .env
+    env_file:
+      - .env
+      - .env.local
     depends_on:
-      - ollama
-      - nlp-service
+      ollama-init:
+        condition: service_completed_successfully
+      nlp-service:
+        condition: service_healthy
     environment:
       NLP_SERVICE_URL: http://nlp-service:8000
       OLLAMA_HOST: http://ollama:11434
-      NEXTAUTH_URL: ${NEXTAUTH_URL}
-      NEXTAUTH_URL_INTERNAL: ${NEXTAUTH_URL_INTERNAL}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      AUTH_URL_INTERNAL: ${AUTH_URL_INTERNAL:-http://web:3000}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_URL_INTERNAL: ${NEXTAUTH_URL_INTERNAL:-http://web:3000}
     ports:
       - "3000:3000"
 
