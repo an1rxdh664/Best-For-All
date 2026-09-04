@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const mailer = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+    },
+});
 
 export async function POST(req: Request){
     try {
@@ -25,8 +33,8 @@ export async function POST(req: Request){
             }
         })
 
-        await resend.emails.send({
-            from: "Auth <onboarding@resend.dev>",
+        await mailer.sendMail({
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
             to: email,
             subject: "Account Verification Code",
             html: `

@@ -65,6 +65,12 @@ services:
       AUTH_URL_INTERNAL: ${AUTH_URL_INTERNAL:-http://web:3000}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXTAUTH_URL_INTERNAL: ${NEXTAUTH_URL_INTERNAL:-http://web:3000}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
     ports:
       - "3000:3000"
 
