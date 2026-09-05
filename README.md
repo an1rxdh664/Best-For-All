@@ -114,10 +114,6 @@ docker compose up --build
 
 This brings up three services: `ollama` (+ `ollama-init` to auto-pull the model), `nlp-service`, and `web`. See [`docs/SETUP.md`](./docs/SETUP.md) for required `.env` values, GPU configuration, and troubleshooting steps for common issues (Overpass rate-limit warnings, Prisma adapter not being picked up, etc).
 
-## CONCERN
-
-This project currently has **live API keys checked into source** (hardcoded fallback values in `nlp/Phase_2.py`, and a `.env` file with real values under `nlp/`). Rotate these keys and remove them from git history before any public release. Full details and remediation steps are in [`docs/SECURITY.md`](./docs/SECURITY.md) — please read it.
-
 ## Status
 
 This is an active pilot. Known rough edges and near-term plans are tracked in [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md#known-limitations--roadmap).
