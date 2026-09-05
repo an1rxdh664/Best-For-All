@@ -10,7 +10,7 @@ export default function Home() {
 
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">
-            Geo-Food Assistant
+            Best Of All
           </h1>
           <p className="mt-2 text-sm text-neutral-500">
             Ask for food nearby in plain language and get real
