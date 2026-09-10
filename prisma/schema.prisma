@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SenderType {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth.js Relations
+  accounts      Account[]
+  sessions      Session[]
+
+  // New Chat and preferences relations
+  conversations Conversation[]
+  userPreferences UserPreferences?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model UserPreferences {
+  userId                   String   @id @map("user_id")
+  systemPromptOverride     String?      @map("system_prompt_override") @db.Text
+  modelInfo                Json?        @map("model_info")
+
+  user                     User     @relation(fields : [userId], references : [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model Conversation {
+  convoId           String    @id @default(cuid())      @map("convo_id")
+  userId            String                              @map("user_id")
+  title             String        @default("New Chat")
+  isArchieved       Boolean       @default(false)       @map("is_archieved")
+  isPinned          Boolean       @default(false)       @map("is_pinned")
+  userModelConfig   Json?                               @map("user_model_config")
+  createdAt         DateTime      @default(now())       @map("created_at")
+  updatedAt         DateTime      @default(now())       @map("updated_at")
+
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message           Message[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@map("converstations")
+}
+
+model Message {
+  id            String      @id @default(cuid())
+  convoId       String                          @map("convo_id")
+  senderType    SenderType                      @map("sender_type")
+  content       String                          @db.Text
+  tokenUsed     Int             @default(0)     @map("token_used")
+  metaData      Json?
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  converstation Conversation    @relation(fields: [convoId], references: [convoId], onDelete: Cascade)
+  attachments   Attachment[]
+
+  @@index([convoId, createdAt(sort: Asc)])
+  @@map("messages")
+}
+
+model Attachment {
+  id          String  @id @default(cuid())
+  messageId   String                      @map("message_id")
+  filePath    String                      @map("file_path")
+  fileType    String                      @map("file_type")
+
+  message     Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}

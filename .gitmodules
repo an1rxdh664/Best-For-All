@@ -1,0 +1,4 @@
+[submodule "nlp"]
+	path = nlp
+	url = https://github.com/an1rxdh664/best-of-all-llm.git
+	branch = local-ani
