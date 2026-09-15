@@ -1,15 +1,47 @@
 services:
+  # local-overpass:
+  #   image: wiktorn/overpass-api
+  #   container_name: local_overpass
+  #   environment:
+  #     OVERPASS_MODE: clone
+  #     OVERPASS_PLANET_URL: https://download.geofabrik.de/asia/india-latest.osm.pbf
+  #     OVERPASS_RULES_LOAD: 60
+  #   volumes:
+  #     - overpass_db:/db
+  #   ports:
+  #     - "8080:80"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost/api/status"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 10
+  #     start_period: 5m   # clone can take a long time; don't let this fail health early
+
+  local-overpass:
+      image: wiktorn/overpass-api
+      container_name: local_overpass
+      environment:
+        OVERPASS_MODE: init
+        OVERPASS_META: "no"
+        OVERPASS_PLANET_URL: https://download.geofabrik.de/asia/india-latest.osm.pbf
+        OVERPASS_DIFF_URL: https://download.geofabrik.de/asia/india-updates/
+        OVERPASS_RULES_LOAD: 60
+        OVERPASS_STOP_AFTER_INIT: "false"
+      volumes:
+        - overpass_db:/db
+      ports:
+        - "8080:80"
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost/api/status"]
+        interval: 30s
+        timeout: 10s
+        retries: 10
+        start_period: 5m
+
   ollama:
     image: ollama/ollama
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     volumes:
       - ollama_models:/root/.ollama
     ports:
@@ -38,6 +70,11 @@ services:
     build: ./nlp
     env_file:
       - ./nlp/.env
+    environment:
+      OVERPASS_URL: http://local-overpass:80/api/interpreter
+    depends_on:
+      local-overpass:
+        condition: service_healthy
     ports:
       - "8000:8000"
     healthcheck:
@@ -76,3 +113,4 @@ services:
 
 volumes:
   ollama_models:
+  overpass_db:
