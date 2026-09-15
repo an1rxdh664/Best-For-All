@@ -126,3 +126,14 @@ model Attachment {
 
   @@map("attachments")
 }
+
+model PasswordResetTicket {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("password_reset_tickets")
+}

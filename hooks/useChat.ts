@@ -8,6 +8,7 @@ export function useChat() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [userLocation, setUserLocation] = useState<{ lat: number | null; lon: number | null}>({ lat: null, lon: null})
+    const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
         if(!navigator.geolocation) return;
@@ -149,7 +150,8 @@ export function useChat() {
     }
 
     const sendMessage = async (content: string) => {
-        if (!content.trim()) return;
+        if (!content.trim() || isSending) return;
+        setIsSending(true);
 
         let targetId = activeId;
         let updatedConversations = [...conversations];
@@ -198,10 +200,12 @@ export function useChat() {
             createdAt: new Date().toISOString(),
         };
 
+        const targetConvoBeforeSend = updatedConversations.find((c) => c.id === targetId);
+        const isFirstMessage = (targetConvoBeforeSend?.messages.length ?? 0) === 0;
+
         setConversations(
             updatedConversations.map((c) => {
                 if (c.id === targetId) {
-                    const isFirstMessage = c.messages.length === 0;
                     return {
                         ...c,
                         title: isFirstMessage ? content.slice(0, 25) + "..." : c.title,
@@ -212,7 +216,7 @@ export function useChat() {
                 return c;
             })
         );
-        
+
         const restrucutredPayload = [{ role: "user", content: userMsg.content }];
 
         // persist user message if authenticated
@@ -232,10 +236,28 @@ export function useChat() {
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type" : "application/json" },
-                body: JSON.stringify({ messages : restrucutredPayload, convoId: targetId, lat: userLocation.lat, lon: userLocation.lon})
+                body: JSON.stringify({ messages : restrucutredPayload, convoId: targetId, lat: userLocation.lat, lon: userLocation.lon, isFirstMessage})
             });
 
             const data = await res.json();
+
+            if (isFirstMessage && data.title) {
+                setConversations((prev) => prev.map((c) =>
+                    c.id === targetId ? { ...c, title: data.title } : c
+                ));
+
+                if (status === "authenticated" && session?.user?.id) {
+                    try {
+                        await fetch(`/api/conversations/${targetId}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ title: data.title }),
+                        });
+                    } catch (e) {
+                        console.error("Failed to persist generated title:", e);
+                    }
+                }
+            }
 
             const assistantMsg : Message = {
                 id: crypto.randomUUID(),
@@ -269,6 +291,8 @@ export function useChat() {
             }
         } catch (e) {
             console.error("Error communicating to the ollama API route : ", e);
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -282,5 +306,6 @@ export function useChat() {
         deleteChat,
         renameChat,
         sendMessage,
+        isSending
     };
 }

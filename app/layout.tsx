@@ -5,6 +5,13 @@ import { Providers } from "./providers";
 import { auth, signOut } from "@/auth";
 import React from "react";
 import { AuthSyncListener } from "@/components/AuthSyncListener"
+import { Fraunces } from "next/font/google";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
 
 export default async function RootLayout({ children }: {children: React.ReactNode}) {
 
@@ -56,7 +63,7 @@ export default async function RootLayout({ children }: {children: React.ReactNod
 
   return(
     <>
-      <html>
+      <html className={fraunces.variable}>
         <body>
           <Providers>
             <AuthSyncListener />
