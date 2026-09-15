@@ -26,9 +26,10 @@ const suggestions = [
 interface ChatCanvasProps {
     conversation: Conversation | undefined;
     onSendMessage: (text: string) => void;
+    isSending: boolean;
 }
 
-export default function ChatCanvas({ conversation, onSendMessage }: ChatCanvasProps) {
+export default function ChatCanvas({ conversation, onSendMessage, isSending }: ChatCanvasProps) {
     const [input, setInput] = useState("");
     const [isListening, setIsListening] = useState(false);
     const [micSupported, isMicSupported] = useState(true);
@@ -78,73 +79,94 @@ const toggleMic = () => {
 };
 
     const handleSend = () => {
-        if (!input.trim()) return;
+        if (!input.trim() || isSending) return;
         onSendMessage(input);
         setInput("");
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") handleSend();
+        if (e.key === "Enter" && !isSending) handleSend();
     };
 
     const messages = conversation?.messages || [];
 
     return (
-        <main className="relative flex flex-1 flex-col items-center justify-between px-8 py-6 h-full overflow-hidden">
+        <main className="relative flex flex-1 flex-col h-full overflow-hidden">
             {/* Empty State / Suggestions (Only show when there are no messages) */}
             {messages.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center w-full max-w-xl">
-                    
-                    < MascotFace />
+                <div className="flex flex-1 flex-col items-center justify-center px-8">
+                    <div className="w-full max-w-xl flex flex-col items-center">
+                        < MascotFace />
 
-                    <div className="relative mb-10 grid w-full grid-cols-2 gap-3">
-                        {suggestions.map((s, i) => (
-                            <button key={i} onClick={() => onSendMessage(s.text)} className="rounded-xl bg-neutral-50 px-4 py-3 text-left text-[13px] text-neutral-600 shadow-sm hover:bg-neutral-100 cursor-pointer">
-                                {s.text}
-                            </button>
-                        ))}
+                        <div className="relative mb-10 grid w-full grid-cols-2 gap-3">
+                            {suggestions.map((s, i) => (
+                                <button key={i} onClick={() => onSendMessage(s.text)} className="rounded-xl bg-neutral-50 px-4 py-3 text-left text-[13px] text-neutral-600 shadow-sm hover:bg-neutral-100 cursor-pointer">
+                                    {s.text}
+                                </button>
+                            ))}
+                        </div>
+
+                        <h1 className="mb-1 text-2xl font-semibold">
+                            <span className="bg-rose-100 px-2 text-rose-500">Welcome, {session?.user?.name?.split(" ")[0]}!</span>
+                        </h1>
+                        <p className="mb-8 text-lg text-neutral-300">How can I help you today?</p>
                     </div>
-
-                    <h1 className="mb-1 text-2xl font-semibold">
-                        {/* <span className="bg-rose-100 px-2 text-rose-500">Welcome, {session?.user?.name?.slice(0, session?.user?.name?.indexOf(" "))}!</span> */}
-                        <span className="bg-rose-100 px-2 text-rose-500">Welcome, {session?.user?.name?.split(" ")[0]}!</span>
-                    </h1>
-                    <p className="mb-8 text-lg text-neutral-300">How can I help you today?</p>
                 </div>
             ) : (
-                <div className="flex-1 w-full max-w-xl overflow-y-auto space-y-4 py-4">
-                    {messages.map((m) => (
-                        <div key={m.id} className={`flex w-full ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${m.sender === "user" ? "bg-neutral-900 text-white rounded-br-none" : "bg-neutral-100 text-neutral-800 rounded-bl-none"}`}>
-                                {m.content}
+                <div className="flex-1 w-full overflow-y-auto chat-scroll">
+                    <div className="mx-auto w-full max-w-3xl space-y-4 px-8 py-6">
+                        {messages.map((m) => (
+                            <div key={m.id} className={`flex w-full ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
+                                <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${m.sender === "user" ? "bg-neutral-900 text-white rounded-br-none" : "bg-neutral-100 text-neutral-800 rounded-bl-none"}`}>
+                                    {m.content}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                        {isSending && (
+                            <div className="flex w-full justify-start">
+                                <div className="max-w-[80%] rounded-2xl rounded-bl-none bg-neutral-100 px-4 py-3 text-sm text-neutral-800">
+                                    <span className="flex items-center gap-1">
+                                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: "0ms" }} />
+                                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: "150ms" }} />
+                                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-400" style={{ animationDelay: "300ms" }} />
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
-            <div className="w-full max-w-xl flex flex-col items-center">
-                <div className="flex w-full items-center gap-3 rounded-full bg-neutral-900 px-5 py-3">
-                    <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="What are the best places to visit in monsoon?"
-                        className="flex-1 bg-transparent text-sm text-white placeholder-neutral-400 outline-none"
-                    />
-                    <button
-                        onClick={toggleMic}
-                        disabled={!micSupported}
-                        title={micSupported ? (isListening ? "Stop listening" : "Speak") : "Voice input not supported in this browser"}
-                        className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
-                        isListening ? "text-rose-400" : "text-neutral-400 hover:text-white"}`}>
-                        {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-                    </button>
-                    <button onClick={handleSend} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black hover:bg-neutral-200 cursor-pointer">
-                        <ArrowRight size={15} />
-                    </button>
+            <div className="w-full flex flex-col items-center px-8 py-6">
+                <div className="w-full max-w-xl flex flex-col items-center">
+                    <div className="flex w-full items-center gap-3 rounded-full bg-neutral-900 px-5 py-3">
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            disabled={isSending}
+                            placeholder={isSending ? "Waiting for a response..." : "What are the best places to visit in monsoon?"}
+                            className="flex-1 bg-transparent text-sm text-white placeholder-neutral-400 outline-none disabled:cursor-not-allowed"
+                        />
+                        <button
+                            onClick={toggleMic}
+                            disabled={!micSupported || isSending}
+                            title={micSupported ? (isListening ? "Stop listening" : "Speak") : "Voice input not supported in this browser"}
+                            className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                            isListening ? "text-rose-400" : "text-neutral-400 hover:text-white"}`}>
+                            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                        </button>
+                        <button
+                            onClick={handleSend}
+                            disabled={isSending}
+                            className="flex h-8 w-8 items-center justify-center rounded-full cursor-pointer transition"
+                            style={{ background: "#C1440E", color: "#FBF7F0" }}
+                        >
+                            <ArrowRight size={15} />
+                        </button>
+                    </div>
+                    <p className="mt-3 text-[11px] text-neutral-400">Chat can be wrong sometimes, please verify the output</p>
                 </div>
-                <p className="mt-3 text-[11px] text-neutral-400">Chat can be wrong sometimes, please verify the output</p>
             </div>
         </main>
     );

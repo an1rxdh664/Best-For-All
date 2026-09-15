@@ -17,6 +17,7 @@ export default function ChatPage() {
         deleteChat,
         renameChat,
         sendMessage,
+        isSending
     } = useChat();
 
     if (status === "loading") {
@@ -28,19 +29,20 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="flex h-screen w-full bg-white p-3">
-            <div className="flex h-full w-full overflow-hidden rounded-2xl bg-white">
+        <div className="flex h-screen w-full" style={{ background: "#FBF7F0" }}>
+            <div className="flex h-full w-full overflow-hidden bg-white">
                 <Sidebar
-                conversations={conversations}
-                activeId={activeId}
-                onSelect={selectChat}
-                onNewChat={createNewChat}
-                onDeleteChat={deleteChat}
-                onRenameChat={renameChat}
+                    conversations={conversations}
+                    activeId={activeId}
+                    onSelect={selectChat}
+                    onNewChat={createNewChat}
+                    onDeleteChat={deleteChat}
+                    onRenameChat={renameChat}
                 />
                 <ChatCanvas 
-                conversation={activeConversation}
-                onSendMessage={sendMessage}
+                    conversation={activeConversation}
+                    onSendMessage={sendMessage}
+                    isSending={isSending}
                 />
             </div>
         </div>
