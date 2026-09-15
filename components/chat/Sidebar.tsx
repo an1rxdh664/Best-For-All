@@ -8,16 +8,16 @@ import { Conversation } from "@/types/chat";
 import ProfileDashboard from "@/components/ProfileDashboard";
 
 interface SidebarProps {
-  conversations: Conversation[];
-  activeId: string | null;
-  onSelect: (id: string) => void;
-  onNewChat: () => void;
-  onDeleteChat: (id: string) => void;
-  onRenameChat: (id : string, title: string) => void;
+    conversations: Conversation[];
+    activeId: string | null;
+    onSelect: (id: string) => void;
+    onNewChat: () => void;
+    onDeleteChat: (id: string) => void;
+    onRenameChat: (id : string, title: string) => void;
 }
 
 export default function Sidebar({ conversations, activeId, onSelect, onNewChat, onDeleteChat, onRenameChat }: SidebarProps) {
-    const { data: session } = useSession();
+    const { data: session, update } = useSession();
     const [isOpen, setIsOpen] = useState(true);
     const [editingId, setEditingId] = useState<string | null>();
     const [draftTitle, setDraftTitle] = useState("");
@@ -38,7 +38,7 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                 const res = await fetch("/api/auth/email-verified", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: session.user.email }),
+                    body: JSON.stringify({ email: session?.user?.email }),
                 })
 
                 const data = await res.json();
@@ -111,12 +111,16 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
     }
 
     return (
-        <aside className={`relative flex h-full shrink-0 flex-col border-r border-neutral-100 transition-all duration-200 ${isOpen ? "w-64 p-4" : "w-14 p-2"}`}>
+        <aside
+            className={`relative flex h-full shrink-0 flex-col transition-all duration-200 ${isOpen ? "w-64 p-4" : "w-14 p-2"}`}
+            style={{ background: "#FBF7F0", borderRight: "1px solid rgba(107,91,78,0.15)" }}
+        >
             <div className={`mb-6 flex ${isOpen ? "items-center justify-between" : "flex-col items-center gap-2"}`}>
                 <div className="flex items-center gap-2 overflow-hidden">
                     <button
                         onClick={() => setShowProfileDashboard(true)}
-                        className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 via-fuchsia-400 to-rose-400 focus:outline-none"
+                        className="h-8 w-8 shrink-0 rounded-full overflow-hidden focus:outline-none"
+                        style={{ background: "#E8B34A" }}
                         aria-label="Open profile dashboard"
                     >
                         {session?.user?.image ? (
@@ -130,10 +134,10 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                         ) : null}
                     </button>
 
-                    {isOpen && <span className="truncate text-sm font-medium text-neutral-800">{session?.user?.name}</span>}
+                    {isOpen && <span className="truncate text-sm font-medium" style={{ color: "#2D2420" }}>{session?.user?.name}</span>}
                 </div>
 
-                <button className="text-neutral-400 hover:text-neutral-600 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+                <button className="cursor-pointer transition" style={{ color: "#A99A8C" }} onClick={() => setIsOpen(!isOpen)}>
                 {isOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
                 </button>
             </div>
@@ -148,33 +152,39 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                     onVerifyEmail={sendOtp}
                     sendingOtp={sendingOtp}
                     onSignOut={async () => await signOut({ redirectTo: "/" })}
+                    onUsernameUpdated={async (newName) => {
+                        await update({ user: { name: newName } });
+                    }}
                 />
             )}
 
             {showVerifyModal && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center">
                     <div className="absolute inset-0 bg-black/40" onClick={() => setShowVerifyModal(false)} />
-                    <div className="relative z-[71] w-80 rounded-2xl bg-white p-5 shadow-xl">
-                        <h3 className="text-sm font-semibold text-neutral-800">Verify your email</h3>
-                        <p className="mt-1 text-xs text-neutral-500">Enter the code we sent to {session?.user?.email}</p>
+                    <div className="relative z-[71] w-80 rounded-2xl p-5" style={{ background: "#FBF7F0", boxShadow: "0 20px 40px rgba(26,20,16,0.25)" }}>
+                        <h3 className="text-sm font-medium font-[family-name:var(--font-fraunces)]" style={{ color: "#2D2420" }}>Verify your email</h3>
+                        <p className="mt-1 text-xs" style={{ color: "#6B5B4E" }}>Enter the code we sent to {session?.user?.email}</p>
                         <input
                             autoFocus
                             value={otpValue}
                             onChange={(e) => setOtpValue(e.target.value)}
                             placeholder="Enter OTP"
-                            className="mt-3 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-fuchsia-400"
+                            className="mt-3 w-full rounded-lg px-3 py-2 text-sm outline-none"
+                            style={{ border: "1px solid rgba(107,91,78,0.25)", color: "#2D2420", background: "#FFFFFF" }}
                         />
                         <div className="mt-4 flex justify-end gap-2">
                             <button
                                 onClick={() => setShowVerifyModal(false)}
-                                className="rounded-lg px-3 py-1.5 text-xs text-neutral-500 hover:bg-neutral-50"
+                                className="rounded-lg px-3 py-1.5 text-xs cursor-pointer"
+                                style={{ color: "#6B5B4E" }}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={verifyOtp}
                                 disabled={verifyingOtp}
-                                className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-blue-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                                className="rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer disabled:opacity-60"
+                                style={{ background: "#C1440E", color: "#FBF7F0" }}
                             >
                                 {verifyingOtp ? "Verifying..." : "Verify"}
                             </button>
@@ -184,30 +194,49 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
             )}
 
             <nav className="mb-6 flex flex-col gap-1 text-sm">
-                <button onClick={onNewChat} className={`flex items-center ${isOpen ? "justify-between" : "justify-center"} rounded-lg px-2 py-2 text-neutral-700 hover:bg-neutral-50 cursor-pointer`}>
-                {isOpen && <span>New Chat</span>}
+                <button
+                    onClick={onNewChat}
+                    className={`flex items-center ${isOpen ? "justify-between" : "justify-center"} rounded-lg px-2 py-2 cursor-pointer transition`}
+                    style={{ color: "#2D2420" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F3EBDF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                {isOpen && <span>New chat</span>}
                 <Plus size={15} />
                 </button>
 
-                <button className={`flex items-center ${isOpen ? "justify-between" : "justify-center"} rounded-lg px-2 py-2 text-neutral-700 hover:bg-neutral-50 cursor-pointer`}>
+                <button
+                    className={`flex items-center ${isOpen ? "justify-between" : "justify-center"} rounded-lg px-2 py-2 cursor-pointer transition`}
+                    style={{ color: "#2D2420" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F3EBDF")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
                 {isOpen && <span>Favourites</span>}
                 <Heart size={15} />
                 </button>
             </nav>
 
             {isOpen && (
-                <p className="mb-2 px-2 text-[11px] font-medium tracking-wide text-neutral-400">RECENT CHATS</p>
+                <p className="mb-2 px-2 text-[11px] font-medium tracking-wide" style={{ color: "#A99A8C" }}>Recent chats</p>
             )}
 
             <div className="flex-1 overflow-y-auto space-y-1">
                 {conversations.map((c) => {
                     const isEditing = editingId === c.id;
+                    const isActive = c.id === activeId;
 
                     return (
                         <div
                             key={c.id}
-                            className={`group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-xs transition-colors ${
-                            c.id === activeId ? "bg-neutral-100 font-semibold text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"}`}>
+                            className="group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-xs transition-colors"
+                            style={{
+                                background: isActive ? "#F3EBDF" : "transparent",
+                                color: isActive ? "#2D2420" : "#6B5B4E",
+                                fontWeight: isActive ? 500 : 400,
+                            }}
+                            onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#F7F1E7"; }}
+                            onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                        >
                             <MessageSquare size={14} className="shrink-0" />
 
                             {isOpen && (
@@ -220,7 +249,8 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                                             if (e.key === "Enter") confirmEdit();
                                             if (e.key === "Escape") cancelEdit();
                                         }}
-                                        className="flex-1 min-w-0 rounded bg-white px-1 py-0.5 text-xs outline-none border border-neutral-200"
+                                        className="flex-1 min-w-0 rounded px-1 py-0.5 text-xs outline-none"
+                                        style={{ background: "#FFFFFF", border: "1px solid rgba(107,91,78,0.25)", color: "#2D2420" }}
                                     />
                                 ) : (
                                     <button
@@ -235,10 +265,10 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                                 <div className="flex shrink-0 items-center gap-1">
                                     {isEditing ? (
                                         <>
-                                            <button onClick={confirmEdit} className="text-neutral-400 hover:text-neutral-700 cursor-pointer">
+                                            <button onClick={confirmEdit} className="cursor-pointer transition" style={{ color: "#A99A8C" }}>
                                                 <Check size={13} />
                                             </button>
-                                            <button onClick={cancelEdit} className="text-neutral-400 hover:text-neutral-700 cursor-pointer">
+                                            <button onClick={cancelEdit} className="cursor-pointer transition" style={{ color: "#A99A8C" }}>
                                                 <X size={13} />
                                             </button>
                                         </>
@@ -246,12 +276,16 @@ export default function Sidebar({ conversations, activeId, onSelect, onNewChat, 
                                         <>
                                             <button
                                                 onClick={() => startEditing(c.id, c.title)}
-                                                className="opacity-0 text-neutral-400 hover:text-neutral-700 group-hover:opacity-100 cursor-pointer">
+                                                className="opacity-0 group-hover:opacity-100 cursor-pointer transition"
+                                                style={{ color: "#A99A8C" }}>
                                                 <Pencil size={13} />
                                             </button>
                                             <button
                                                 onClick={() => onDeleteChat(c.id)}
-                                                className="opacity-0 text-neutral-400 hover:text-rose-500 group-hover:opacity-100 cursor-pointer">
+                                                className="opacity-0 group-hover:opacity-100 cursor-pointer transition"
+                                                style={{ color: "#A99A8C" }}
+                                                onMouseEnter={(e) => (e.currentTarget.style.color = "#C1440E")}
+                                                onMouseLeave={(e) => (e.currentTarget.style.color = "#A99A8C")}>
                                                 <Trash2 size={13} />
                                             </button>
                                         </>
